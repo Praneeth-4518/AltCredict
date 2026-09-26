@@ -18,6 +18,14 @@ from ml.data_loader import load_combined_dataset
 DB_PATH = "altcredit.db"
 
 
+def safe_print(*args, **kwargs):
+    try:
+        print(*args, **kwargs)
+    except Exception:
+        pass
+
+
+
 def get_db_connection(db_path: str = DB_PATH) -> sqlite3.Connection:
     """
     Creates and returns a connection to the SQLite database.
@@ -117,6 +125,24 @@ def init_db(db_path: str = DB_PATH, seed_data: bool = True):
     );
     """)
 
+    # 6. Payments & Credit Activation Audit Table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS payments (
+        payment_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        txn_id TEXT UNIQUE NOT NULL,
+        applicant_id TEXT NOT NULL,
+        product_name TEXT NOT NULL,
+        product_type TEXT,
+        interest_rate TEXT,
+        payment_type TEXT NOT NULL,
+        account_name TEXT,
+        payment_detail TEXT,
+        amount REAL DEFAULT 25.0,
+        status TEXT DEFAULT 'PAID',
+        payment_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
     # Auto-migrations for backwards compatibility
     for col_def in [
         "lender_status TEXT DEFAULT 'Pending Review'",
@@ -134,7 +160,7 @@ def init_db(db_path: str = DB_PATH, seed_data: bool = True):
         seed_database(conn)
 
     conn.close()
-    print(f"[Database] SQLite DB initialized successfully at '{db_path}'.")
+    safe_print(f"[Database] SQLite DB initialized successfully at '{db_path}'.")
 
 
 def seed_database(conn: sqlite3.Connection, data_dir: str = "."):
@@ -146,12 +172,12 @@ def seed_database(conn: sqlite3.Connection, data_dir: str = "."):
     # Check if applicants table is already populated
     cursor.execute("SELECT COUNT(*) FROM applicants;")
     if cursor.fetchone()[0] > 0:
-        print("[Database] DB already contains data. Ensuring seed users exist.")
+        safe_print("[Database] DB already contains data. Ensuring seed users exist.")
         seed_default_users(cursor)
         conn.commit()
         return
 
-    print("[Database] Seeding database from JSON/CSV files...")
+    safe_print("[Database] Seeding database from JSON/CSV files...")
 
     # Load combined raw dataset
     df_combined = load_combined_dataset(data_dir)
@@ -219,7 +245,7 @@ def seed_database(conn: sqlite3.Connection, data_dir: str = "."):
     seed_default_users(cursor)
     seed_initial_evaluations(conn)
     conn.commit()
-    print("[Database] Database successfully seeded!")
+    safe_print("[Database] Database successfully seeded!")
 
 
 def seed_initial_evaluations(conn: sqlite3.Connection):
@@ -356,9 +382,7 @@ def save_credit_evaluation(
     comp_json = json.dumps(result_dict.get("component_scores", {}))
 
     if lender_status == "Pending Review":
-        if rule_score >= 650:
-            lender_status = "Approved"
-        elif rule_score < 350:
+        if rule_score < 350:
             lender_status = "Rejected"
 
     cursor.execute("""
@@ -375,6 +399,30 @@ def save_credit_evaluation(
 
     conn.commit()
     conn.close()
+
+
+def get_latest_evaluation_for_applicant(applicant_id: str, db_path: str = DB_PATH) -> Optional[Dict[str, Any]]:
+    """
+    Retrieves the most recent credit evaluation record for an applicant.
+    """
+    conn = get_db_connection(db_path)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT * FROM credit_evaluations
+    WHERE applicant_id = ?
+    ORDER BY eval_timestamp DESC, eval_id DESC
+    LIMIT 1;
+    """, (applicant_id,))
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if row is None:
+        return None
+
+    return dict(row)
+
 
 
 def update_lender_decision(
@@ -566,7 +614,62 @@ def upsert_applicant_profile(applicant_data: Dict[str, Any], db_path: str = DB_P
     conn.close()
 
 
+def save_payment_record(
+    txn_id: str,
+    applicant_id: str,
+    product_name: str,
+    product_type: str,
+    interest_rate: str,
+    payment_type: str,
+    account_name: str,
+    payment_detail: str,
+    amount: float = 25.0,
+    status: str = "PAID",
+    db_path: str = DB_PATH
+) -> bool:
+    """
+    Saves a completed payment / credit activation transaction to SQLite database.
+    """
+    conn = get_db_connection(db_path)
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+        INSERT OR REPLACE INTO payments (
+            txn_id, applicant_id, product_name, product_type, interest_rate,
+            payment_type, account_name, payment_detail, amount, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        """, (
+            txn_id, applicant_id, product_name, product_type, interest_rate,
+            payment_type, account_name, payment_detail, amount, status
+        ))
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        safe_print(f"[Database Error] Failed to save payment record: {e}")
+        conn.close()
+        return False
+
+
+def get_payment_history(applicant_id: Optional[str] = None, db_path: str = DB_PATH) -> pd.DataFrame:
+    """
+    Retrieves stored payment transactions as a pandas DataFrame.
+    """
+    conn = get_db_connection(db_path)
+
+    if applicant_id:
+        query = "SELECT * FROM payments WHERE applicant_id = ? ORDER BY payment_timestamp DESC;"
+        df = pd.read_sql_query(query, conn, params=[applicant_id])
+    else:
+        query = "SELECT * FROM payments ORDER BY payment_timestamp DESC;"
+        df = pd.read_sql_query(query, conn)
+
+    conn.close()
+    return df
+
+
 if __name__ == "__main__":
     init_db()
     user = authenticate_user("lender@altcredit.com", "lender123")
-    print("\nAuthenticated Lender User:", user)
+    safe_print("\nAuthenticated Lender User:", user)
