@@ -137,8 +137,6 @@ python run_pipeline.py
 👉 **Live Application:**  
 **https://altcredict-bnp.streamlit.app/**
 
-🔗 **[CLICK HERE TO OPEN ALT CREDIT](https://altcredict-bnp.streamlit.app/)**
-
 > The complete AltCredit Alternative Credit-Scoring Platform is deployed and available online.  
 > Click the link above to access the live application directly.
 
