@@ -36,6 +36,7 @@ class PipelinePreprocessor:
         self.feature_names: List[str] = []
         self.is_fitted: bool = False
 
+    #Raw Data Clean
     def clean_raw_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Cleans data types, drops duplicates, and handles invalid values.
