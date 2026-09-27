@@ -128,7 +128,10 @@ To re-train the models and execute data pre-processing, target generation, and e
 ```bash
 python run_pipeline.py
 ```
+### Deployment Link
+🚀 **Live Deployment:** https://altcredit-bnp.streamlit.app/
 
+**[👉 Open AltCredit Live Demo](https://altcredit-bnp.streamlit.app/)**
 ---
 
 ## 💻 Programmatic Usage & API Example
