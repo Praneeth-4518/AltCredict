@@ -1743,7 +1743,6 @@ def render_borrower_scorecard(applicant_id: str):
                     st.session_state["selected_offer"] = prod
                     st.session_state["payment_completed"] = False
                     st.session_state["applicant_nav"] = "🏦 Partner Bank Checkout Division"
-                    st.session_state["nav_radio_target"] = "🏦 Partner Bank Checkout Division"
                     st.rerun()
         else:
             st.warning("No pre-approved credit offers available right now based on your current score.")
@@ -1898,14 +1897,12 @@ def render_dummy_bank_division(applicant_id: str):
     with col_hdr2:
         if st.button("⬅️ Back to Scorecard", key="btn_top_back_scorecard", use_container_width=True):
             st.session_state["applicant_nav"] = "💳 Credit Scorecard & Pre-Approved Offers"
-            st.session_state["nav_radio_target"] = "💳 Credit Scorecard & Pre-Approved Offers"
             st.rerun()
 
     if not selected_offer:
         st.warning("No offer selected. Please select a Pre-Approved Credit Offer from your Scorecard.")
         if st.button("⬅️ Return to Scorecard & Offers", key="btn_back_no_offer"):
             st.session_state["applicant_nav"] = "💳 Credit Scorecard & Pre-Approved Offers"
-            st.session_state["nav_radio_target"] = "💳 Credit Scorecard & Pre-Approved Offers"
             st.rerun()
         return
 
@@ -2066,7 +2063,6 @@ Database Audit ID        : Saved to SQLite (altcredit.db -> payments)
         with c_b1:
             if st.button("⬅️ Return to Credit Scorecard & Offers", key="btn_return_scorecard", use_container_width=True):
                 st.session_state["applicant_nav"] = "💳 Credit Scorecard & Pre-Approved Offers"
-                st.session_state["nav_radio_target"] = "💳 Credit Scorecard & Pre-Approved Offers"
                 st.rerun()
         with c_b2:
             if st.button("🔄 Reset / Make Another Payment", key="btn_reset_pay", use_container_width=True):
@@ -2102,7 +2098,6 @@ Database Audit ID        : Saved to SQLite (altcredit.db -> payments)
         with c_p2:
             if st.button("⬅️ Return to Scorecard", use_container_width=True, key="btn_cancel_checkout"):
                 st.session_state["applicant_nav"] = "💳 Credit Scorecard & Pre-Approved Offers"
-                st.session_state["nav_radio_target"] = "💳 Credit Scorecard & Pre-Approved Offers"
                 st.rerun()
 
     st.markdown('</div>', unsafe_allow_html=True)
@@ -2150,7 +2145,6 @@ def render_credit_evaluator():
                 st.session_state["user"]["applicant_id"] = user_app_id
                 st.success(f"🎉 Verified Rule Engine parameters saved for '{user_app_id}'! AltCredit Score: {res['rule_credit_score']} / 1000.")
                 st.session_state["applicant_nav"] = "💳 Credit Scorecard & Pre-Approved Offers"
-                st.session_state["nav_radio_target"] = "💳 Credit Scorecard & Pre-Approved Offers"
                 st.rerun()
         else:
             st.info("📄 Please select and upload your Bank Account Statement or Salary Payslip PDF file above to extract your financial parameters and compute your AltCredit score.")
@@ -2267,7 +2261,6 @@ def render_credit_evaluator():
 
             st.success(f"🎉 Updated profile for '{applicant_id}'! Calculated AltCredit Score: {res['rule_credit_score']} / 1000. Saved to `altcredit.db`!")
             st.session_state["applicant_nav"] = "💳 Credit Scorecard & Pre-Approved Offers"
-            st.session_state["nav_radio_target"] = "💳 Credit Scorecard & Pre-Approved Offers"
             st.rerun()
 
 
