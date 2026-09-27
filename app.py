@@ -1606,6 +1606,11 @@ def render_lender_filtering_portal():
         st.warning("No applicants match the selected criteria. Adjust filter sliders above.")
 
 
+def on_applicant_nav_change():
+    if "nav_radio" in st.session_state:
+        st.session_state["applicant_nav"] = st.session_state["nav_radio"]
+
+
 def render_applicant_dashboard():
     user_app_id = st.session_state["user"].get("applicant_id")
     if not user_app_id:
@@ -1624,18 +1629,15 @@ def render_applicant_dashboard():
     if "applicant_nav" not in st.session_state or st.session_state["applicant_nav"] not in options:
         st.session_state["applicant_nav"] = options[0]
 
-    current_idx = options.index(st.session_state["applicant_nav"])
+    # Keep widget state 'nav_radio' in sync with applicant_nav so radio checkmark shifts in sidebar UI
+    st.session_state["nav_radio"] = st.session_state["applicant_nav"]
 
     app_mode = st.sidebar.radio(
         "Applicant Navigation:",
         options,
-        index=current_idx,
-        key="nav_radio"
+        key="nav_radio",
+        on_change=on_applicant_nav_change
     )
-
-    if app_mode != st.session_state["applicant_nav"]:
-        st.session_state["applicant_nav"] = app_mode
-        st.rerun()
 
     if app_mode == "💳 Credit Scorecard & Pre-Approved Offers":
         render_borrower_scorecard(applicant_id)
@@ -1747,8 +1749,7 @@ def render_borrower_scorecard(applicant_id: str):
                     st.session_state["selected_offer"] = prod
                     st.session_state["payment_completed"] = False
                     st.session_state["applicant_nav"] = "🏦 Partner Bank Checkout Division"
-                    if "nav_radio" in st.session_state:
-                        del st.session_state["nav_radio"]
+                    st.session_state["nav_radio"] = "🏦 Partner Bank Checkout Division"
                     st.rerun()
         else:
             st.warning("No pre-approved credit offers available right now based on your current score.")
@@ -1890,16 +1891,14 @@ def render_dummy_bank_division(applicant_id: str):
     with col_hdr2:
         if st.button("⬅️ Back to Scorecard", key="btn_top_back_scorecard", use_container_width=True):
             st.session_state["applicant_nav"] = "💳 Credit Scorecard & Pre-Approved Offers"
-            if "nav_radio" in st.session_state:
-                del st.session_state["nav_radio"]
+            st.session_state["nav_radio"] = "💳 Credit Scorecard & Pre-Approved Offers"
             st.rerun()
 
     if not selected_offer:
         st.warning("No offer selected. Please select a Pre-Approved Credit Offer from your Scorecard.")
         if st.button("⬅️ Return to Scorecard & Offers", key="btn_back_no_offer"):
             st.session_state["applicant_nav"] = "💳 Credit Scorecard & Pre-Approved Offers"
-            if "nav_radio" in st.session_state:
-                del st.session_state["nav_radio"]
+            st.session_state["nav_radio"] = "💳 Credit Scorecard & Pre-Approved Offers"
             st.rerun()
         return
 
@@ -2060,8 +2059,7 @@ Database Audit ID        : Saved to SQLite (altcredit.db -> payments)
         with c_b1:
             if st.button("⬅️ Return to Credit Scorecard & Offers", key="btn_return_scorecard", use_container_width=True):
                 st.session_state["applicant_nav"] = "💳 Credit Scorecard & Pre-Approved Offers"
-                if "nav_radio" in st.session_state:
-                    del st.session_state["nav_radio"]
+                st.session_state["nav_radio"] = "💳 Credit Scorecard & Pre-Approved Offers"
                 st.rerun()
         with c_b2:
             if st.button("🔄 Reset / Make Another Payment", key="btn_reset_pay", use_container_width=True):
@@ -2097,8 +2095,7 @@ Database Audit ID        : Saved to SQLite (altcredit.db -> payments)
         with c_p2:
             if st.button("⬅️ Return to Scorecard", use_container_width=True, key="btn_cancel_checkout"):
                 st.session_state["applicant_nav"] = "💳 Credit Scorecard & Pre-Approved Offers"
-                if "nav_radio" in st.session_state:
-                    del st.session_state["nav_radio"]
+                st.session_state["nav_radio"] = "💳 Credit Scorecard & Pre-Approved Offers"
                 st.rerun()
 
     st.markdown('</div>', unsafe_allow_html=True)
