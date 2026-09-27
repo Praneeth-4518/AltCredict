@@ -4,7 +4,7 @@
 
 It enables financial institutions to evaluate thin-file and credit-invisible consumers accurately by processing **Bank Account Statements** and **Salary Payslip PDFs** into instant **0–1000 point credit scores**, default probabilities, and pre-approved credit offers.
 
----
+
 
 ## 🌟 Core Features
 
@@ -47,7 +47,7 @@ It enables financial institutions to evaluate thin-file and credit-invisible con
 ### 7. 🗄️ SQLite Database Persistence
 - Built-in SQLite database (`altcredit.db`) storing user accounts, applicant profiles, credit evaluations, lender decision logs, and payment transactions (`db.py`).
 
----
+
 
 ## 📌 Rule Engine Scoring Framework Architecture
 
@@ -128,11 +128,23 @@ To re-train the models and execute data pre-processing, target generation, and e
 ```bash
 python run_pipeline.py
 ```
-### Deployment Link
-🚀 **Live Deployment:** https://altcredit-bnp.streamlit.app/
+# AltCredit Hackathon - Alternative Credit-Scoring Platform
 
-**[👉 Open AltCredit Live Demo](https://altcredit-bnp.streamlit.app/)**
+## 🚀 Live Deployment
+
+### 🌐 Access the AltCredit Application
+
+👉 **Live Application:**  
+**https://altcredit-bnp.streamlit.app/**
+
+🔗 **[CLICK HERE TO OPEN ALT CREDIT](https://altcredit-bnp.streamlit.app/)**
+
+> The complete AltCredit Alternative Credit-Scoring Platform is deployed and available online.  
+> Click the link above to access the live application directly.
+
 ---
+
+This repository contains the unified **Rule-Based & ML Credit-Scoring Platform** for the **AltCredit** hackathon project.
 
 ## 💻 Programmatic Usage & API Example
 
@@ -177,9 +189,7 @@ print(f"Autopay Builder Delta: {sim['score_delta']:+d} pts (New Score: {sim['sim
 # 3. Get Model Explainability (SHAP & Factor Drivers)
 explanation = explain_applicant_risk(applicant_data)
 print("Top Positive Drivers:", explanation["top_negative_risk_contributors"])
-```
 
----
 
 ## 🛡️ Data Security & Compliance
 

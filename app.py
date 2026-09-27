@@ -19,7 +19,6 @@ import uuid
 import pypdf
 import pandas as pd
 import numpy as np
-import altair as alt
 import streamlit as st
 
 from datetime import datetime
@@ -38,12 +37,6 @@ from db import (
 
 
 # Page Configuration
-st.set_page_config(
-    page_title="AltCredit | Modern AI Risk Engine",
-    page_icon="💳",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
 # Initialize SQLite Database on startup
 init_db()
