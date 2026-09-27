@@ -1613,9 +1613,6 @@ def render_applicant_dashboard():
         st.session_state["user"]["applicant_id"] = user_app_id
     applicant_id = user_app_id
 
-    if "applicant_nav" not in st.session_state:
-        st.session_state["applicant_nav"] = "💳 Credit Scorecard & Pre-Approved Offers"
-
     options = [
         "💳 Credit Scorecard & Pre-Approved Offers",
         "📄 AI PDF Financial Extractor & Evaluator",
@@ -1624,20 +1621,21 @@ def render_applicant_dashboard():
     if "selected_offer" in st.session_state and st.session_state["selected_offer"]:
         options.append("🏦 Partner Bank Checkout Division")
 
-    target_nav = st.session_state.get("applicant_nav", options[0])
-    if target_nav not in options:
-        target_nav = options[0]
+    if "applicant_nav" not in st.session_state or st.session_state["applicant_nav"] not in options:
+        st.session_state["applicant_nav"] = options[0]
 
-    # Synchronize Streamlit widget key with target navigation
-    st.session_state["nav_radio"] = target_nav
+    current_idx = options.index(st.session_state["applicant_nav"])
 
     app_mode = st.sidebar.radio(
         "Applicant Navigation:",
         options,
+        index=current_idx,
         key="nav_radio"
     )
 
-    st.session_state["applicant_nav"] = app_mode
+    if app_mode != st.session_state["applicant_nav"]:
+        st.session_state["applicant_nav"] = app_mode
+        st.rerun()
 
     if app_mode == "💳 Credit Scorecard & Pre-Approved Offers":
         render_borrower_scorecard(applicant_id)
@@ -1749,7 +1747,8 @@ def render_borrower_scorecard(applicant_id: str):
                     st.session_state["selected_offer"] = prod
                     st.session_state["payment_completed"] = False
                     st.session_state["applicant_nav"] = "🏦 Partner Bank Checkout Division"
-                    st.session_state["nav_radio"] = "🏦 Partner Bank Checkout Division"
+                    if "nav_radio" in st.session_state:
+                        del st.session_state["nav_radio"]
                     st.rerun()
         else:
             st.warning("No pre-approved credit offers available right now based on your current score.")
@@ -1884,14 +1883,23 @@ def render_borrower_scorecard(applicant_id: str):
 def render_dummy_bank_division(applicant_id: str):
     selected_offer = st.session_state.get("selected_offer")
     
-    st.markdown('<div class="page-title">🏦 Dummy Bank Division Gateway</div>', unsafe_allow_html=True)
-    st.markdown('<div class="page-subtitle">Partner Banking Payment & Credit Subscription Checkout Division</div>', unsafe_allow_html=True)
+    col_hdr1, col_hdr2 = st.columns([3, 1])
+    with col_hdr1:
+        st.markdown('<div class="page-title">🏦 Dummy Bank Division Gateway</div>', unsafe_allow_html=True)
+        st.markdown('<div class="page-subtitle">Partner Banking Payment & Credit Subscription Checkout Division</div>', unsafe_allow_html=True)
+    with col_hdr2:
+        if st.button("⬅️ Back to Scorecard", key="btn_top_back_scorecard", use_container_width=True):
+            st.session_state["applicant_nav"] = "💳 Credit Scorecard & Pre-Approved Offers"
+            if "nav_radio" in st.session_state:
+                del st.session_state["nav_radio"]
+            st.rerun()
 
     if not selected_offer:
         st.warning("No offer selected. Please select a Pre-Approved Credit Offer from your Scorecard.")
         if st.button("⬅️ Return to Scorecard & Offers", key="btn_back_no_offer"):
             st.session_state["applicant_nav"] = "💳 Credit Scorecard & Pre-Approved Offers"
-            st.session_state["nav_radio"] = "💳 Credit Scorecard & Pre-Approved Offers"
+            if "nav_radio" in st.session_state:
+                del st.session_state["nav_radio"]
             st.rerun()
         return
 
@@ -2052,37 +2060,46 @@ Database Audit ID        : Saved to SQLite (altcredit.db -> payments)
         with c_b1:
             if st.button("⬅️ Return to Credit Scorecard & Offers", key="btn_return_scorecard", use_container_width=True):
                 st.session_state["applicant_nav"] = "💳 Credit Scorecard & Pre-Approved Offers"
-                st.session_state["nav_radio"] = "💳 Credit Scorecard & Pre-Approved Offers"
+                if "nav_radio" in st.session_state:
+                    del st.session_state["nav_radio"]
                 st.rerun()
         with c_b2:
             if st.button("🔄 Reset / Make Another Payment", key="btn_reset_pay", use_container_width=True):
                 st.session_state["payment_completed"] = False
                 st.rerun()
     else:
-        st.markdown("<p style='color:#64748B; font-size:0.95rem; margin-bottom:1rem;'>Click the button below to complete authorization & process instant payment with your selected payment type.</p>", unsafe_allow_html=True)
-        if st.button("💳 Just Pay", type="primary", use_container_width=True, key="btn_just_pay"):
-            txn_id = f"TXN_{uuid.uuid4().hex[:10].upper()}"
-            txn_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            st.session_state["payment_completed"] = True
-            st.session_state["txn_id"] = txn_id
-            st.session_state["txn_time"] = txn_time
+        st.markdown("<p style='color:#64748B; font-size:0.95rem; margin-bottom:1rem;'>Click below to complete authorization & process instant payment, or return to your scorecard.</p>", unsafe_allow_html=True)
+        c_p1, c_p2 = st.columns([1.5, 1])
+        with c_p1:
+            if st.button("💳 Just Pay ($25.00)", type="primary", use_container_width=True, key="btn_just_pay"):
+                txn_id = f"TXN_{uuid.uuid4().hex[:10].upper()}"
+                txn_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                st.session_state["payment_completed"] = True
+                st.session_state["txn_id"] = txn_id
+                st.session_state["txn_time"] = txn_time
 
-            # Persist transaction in SQLite database
-            save_payment_record(
-                txn_id=txn_id,
-                applicant_id=applicant_id,
-                product_name=selected_offer.get('product_name', 'Credit Offer'),
-                product_type=selected_offer.get('type', 'Credit Line'),
-                interest_rate=selected_offer.get('interest_rate', '12% APR'),
-                payment_type=payment_type,
-                account_name=account_name,
-                payment_detail=payment_detail,
-                amount=25.0,
-                status="PAID"
-            )
+                # Persist transaction in SQLite database
+                save_payment_record(
+                    txn_id=txn_id,
+                    applicant_id=applicant_id,
+                    product_name=selected_offer.get('product_name', 'Credit Offer'),
+                    product_type=selected_offer.get('type', 'Credit Line'),
+                    interest_rate=selected_offer.get('interest_rate', '12% APR'),
+                    payment_type=payment_type,
+                    account_name=account_name,
+                    payment_detail=payment_detail,
+                    amount=25.0,
+                    status="PAID"
+                )
 
-            st.success("✅ Payment Processed & Persisted! Status: PAID")
-            st.rerun()
+                st.success("✅ Payment Processed & Persisted! Status: PAID")
+                st.rerun()
+        with c_p2:
+            if st.button("⬅️ Return to Scorecard", use_container_width=True, key="btn_cancel_checkout"):
+                st.session_state["applicant_nav"] = "💳 Credit Scorecard & Pre-Approved Offers"
+                if "nav_radio" in st.session_state:
+                    del st.session_state["nav_radio"]
+                st.rerun()
 
     st.markdown('</div>', unsafe_allow_html=True)
 
