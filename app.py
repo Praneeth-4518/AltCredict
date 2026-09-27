@@ -54,8 +54,13 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
 
-    /* Hide standard Streamlit header/footer chrome */
-    header[data-testid="stHeader"] { display: none !important; }
+    /* Streamlit header & sidebar control styling */
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+    }
+    header[data-testid="stHeader"] * {
+        color: #FFFFFF !important;
+    }
     footer { display: none !important; }
     #MainMenu { display: none !important; }
     .stDeployButton { display: none !important; }
@@ -779,78 +784,80 @@ def is_lender_email(email: str) -> bool:
     return any(keyword in clean_email for keyword in lender_keywords)
 
 
-def render_ai_extracted_summary(extracted_data: dict):
+def render_ai_extracted_summary(extracted_data: dict, expanded: bool = False):
     """
     Renders a comprehensive visual summary card showing ALL extracted 
     Rule Engine parameters (Lifestyle, Spending, Repayment, Credit Bonus & Risk Factors).
     Each category is displayed in a separate white background card box with dark readable text.
+    Wrapped in a collapsible dropdown expander.
     """
     doc_type = extracted_data.get("doc_type", "Parsed Financial Document")
-    st.markdown(f"""
-    <div class="white-card" style="border-left: 5px solid #10B981; margin-top:1rem; margin-bottom:1.2rem;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h4 style="margin:0; color:#0F172A; font-weight:800; font-size:1.15rem;">🔍 Financial Profile Summary</h4>
-            <span class="badge-positive" style="background:#DCFCE7; color:#15803D; font-weight:700; padding:0.35rem 0.85rem; border-radius:14px;">
-                📄 Source: {doc_type}
-            </span>
+    with st.expander("🔍 Financial Profile Summary", expanded=expanded):
+        st.markdown(f"""
+        <div class="white-card" style="border-left: 5px solid #10B981; margin-top:0.5rem; margin-bottom:1.2rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h4 style="margin:0; color:#0F172A; font-weight:800; font-size:1.15rem;">🔍 Financial Profile Summary</h4>
+                <span class="badge-positive" style="background:#DCFCE7; color:#15803D; font-weight:700; padding:0.35rem 0.85rem; border-radius:14px;">
+                    📄 Source: {doc_type}
+                </span>
+            </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        with st.container(border=True):
-            st.markdown("""
-            <div style="background:#F1F5F9; border-left:4px solid #10B981; padding:0.45rem 0.75rem; border-radius:8px; margin-bottom:0.75rem;">
-                <span style="color:#0F172A; font-weight:800; font-size:0.9rem;">🏢 Lifestyle</span>
-            </div>
-            """, unsafe_allow_html=True)
-            st.metric("Employment Stability", f"{extracted_data.get('months_at_job', 0)} Months")
-            st.metric("Employment Type", str(extracted_data.get('employment_status', 'none')).title())
-            st.metric("Housing Status", str(extracted_data.get('housing', 'none')).title())
-            st.metric("Verified Rent Paid", f"{extracted_data.get('rent_on_time_months', 0)} Months")
-            st.metric("Digital Footprint", f"{int(round(float(extracted_data.get('digital_payment_rate', 0.0)) * 100))}%")
-            st.metric("Education Level", str(extracted_data.get('education', 'none')).title())
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            with st.container(border=True):
+                st.markdown("""
+                <div style="background:#F1F5F9; border-left:4px solid #10B981; padding:0.45rem 0.75rem; border-radius:8px; margin-bottom:0.75rem;">
+                    <span style="color:#0F172A; font-weight:800; font-size:0.9rem;">🏢 Lifestyle</span>
+                </div>
+                """, unsafe_allow_html=True)
+                st.metric("Employment Stability", f"{extracted_data.get('months_at_job', 0)} Months")
+                st.metric("Employment Type", str(extracted_data.get('employment_status', 'none')).title())
+                st.metric("Housing Status", str(extracted_data.get('housing', 'none')).title())
+                st.metric("Verified Rent Paid", f"{extracted_data.get('rent_on_time_months', 0)} Months")
+                st.metric("Digital Footprint", f"{int(round(float(extracted_data.get('digital_payment_rate', 0.0)) * 100))}%")
+                st.metric("Education Level", str(extracted_data.get('education', 'none')).title())
 
-    with c2:
-        with st.container(border=True):
-            st.markdown("""
-            <div style="background:#F1F5F9; border-left:4px solid #3B82F6; padding:0.45rem 0.75rem; border-radius:8px; margin-bottom:0.75rem;">
-                <span style="color:#0F172A; font-weight:800; font-size:0.9rem;">💰 Spending Behavior</span>
-            </div>
-            """, unsafe_allow_html=True)
-            st.metric("Monthly Income", f"${float(extracted_data.get('monthly_income', 0.0)):,.2f}")
-            st.metric("Monthly Spend", f"${float(extracted_data.get('monthly_spend', 0.0)):,.2f}")
-            st.metric("Expense Diversity", f"{int(round(float(extracted_data.get('essential_pct', 0.0)) * 100))}% Essentials")
-            st.metric("Cashflow Volatility", f"{int(round(float(extracted_data.get('cashflow_volatility', 0.0)) * 100))}%")
-            st.metric("Savings Reserve", f"{extracted_data.get('savings_days', 0)} Days")
+        with c2:
+            with st.container(border=True):
+                st.markdown("""
+                <div style="background:#F1F5F9; border-left:4px solid #3B82F6; padding:0.45rem 0.75rem; border-radius:8px; margin-bottom:0.75rem;">
+                    <span style="color:#0F172A; font-weight:800; font-size:0.9rem;">💰 Spending Behavior</span>
+                </div>
+                """, unsafe_allow_html=True)
+                st.metric("Monthly Income", f"${float(extracted_data.get('monthly_income', 0.0)):,.2f}")
+                st.metric("Monthly Spend", f"${float(extracted_data.get('monthly_spend', 0.0)):,.2f}")
+                st.metric("Expense Diversity", f"{int(round(float(extracted_data.get('essential_pct', 0.0)) * 100))}% Essentials")
+                st.metric("Cashflow Volatility", f"{int(round(float(extracted_data.get('cashflow_volatility', 0.0)) * 100))}%")
+                st.metric("Savings Reserve", f"{extracted_data.get('savings_days', 0)} Days")
 
-    with c3:
-        with st.container(border=True):
-            st.markdown("""
-            <div style="background:#F1F5F9; border-left:4px solid #8B5CF6; padding:0.45rem 0.75rem; border-radius:8px; margin-bottom:0.75rem;">
-                <span style="color:#0F172A; font-weight:800; font-size:0.9rem;">💳 Repayment Discipline</span>
-            </div>
-            """, unsafe_allow_html=True)
-            st.metric("On-Time Payment Rate", f"{int(round(float(extracted_data.get('on_time_rate', 0.0)) * 100))}%")
-            st.metric("Debt-to-Income (DTI)", f"{int(round(float(extracted_data.get('dti', 0.0)) * 100))}%")
-            st.metric("Credit Utilization", f"{int(round(float(extracted_data.get('credit_util', 0.0)) * 100))}%")
-            delinq_30 = int(extracted_data.get('delinq_30plus', 0))
-            delinq_60 = int(extracted_data.get('delinq_60plus', 0))
-            delinq_90 = int(extracted_data.get('delinq_90plus', 0))
-            st.metric("Late Payments", f"{delinq_30} (30d) | {delinq_60} (60d) | {delinq_90} (90d)")
+        with c3:
+            with st.container(border=True):
+                st.markdown("""
+                <div style="background:#F1F5F9; border-left:4px solid #8B5CF6; padding:0.45rem 0.75rem; border-radius:8px; margin-bottom:0.75rem;">
+                    <span style="color:#0F172A; font-weight:800; font-size:0.9rem;">💳 Repayment Discipline</span>
+                </div>
+                """, unsafe_allow_html=True)
+                st.metric("On-Time Payment Rate", f"{int(round(float(extracted_data.get('on_time_rate', 0.0)) * 100))}%")
+                st.metric("Debt-to-Income (DTI)", f"{int(round(float(extracted_data.get('dti', 0.0)) * 100))}%")
+                st.metric("Credit Utilization", f"{int(round(float(extracted_data.get('credit_util', 0.0)) * 100))}%")
+                delinq_30 = int(extracted_data.get('delinq_30plus', 0))
+                delinq_60 = int(extracted_data.get('delinq_60plus', 0))
+                delinq_90 = int(extracted_data.get('delinq_90plus', 0))
+                st.metric("Late Payments", f"{delinq_30} (30d) | {delinq_60} (60d) | {delinq_90} (90d)")
 
-    with c4:
-        with st.container(border=True):
-            st.markdown("""
-            <div style="background:#F1F5F9; border-left:4px solid #EC4899; padding:0.45rem 0.75rem; border-radius:8px; margin-bottom:0.75rem;">
-                <span style="color:#0F172A; font-weight:800; font-size:0.9rem;">🎁 Credit Bonus & Risk</span>
-            </div>
-            """, unsafe_allow_html=True)
-            st.metric("Positive Habits", f"+{int(extracted_data.get('positive_habits', 0))} Habit(s)")
-            st.metric("Risk Flags", f"-{int(extracted_data.get('risk_flags', 0))} Flag(s)")
-            st.metric("Document Type", str(doc_type))
-            st.metric("Extraction Status", "🟢 Extracted")
+        with c4:
+            with st.container(border=True):
+                st.markdown("""
+                <div style="background:#F1F5F9; border-left:4px solid #EC4899; padding:0.45rem 0.75rem; border-radius:8px; margin-bottom:0.75rem;">
+                    <span style="color:#0F172A; font-weight:800; font-size:0.9rem;">🎁 Credit Bonus & Risk</span>
+                </div>
+                """, unsafe_allow_html=True)
+                st.metric("Positive Habits", f"+{int(extracted_data.get('positive_habits', 0))} Habit(s)")
+                st.metric("Risk Flags", f"-{int(extracted_data.get('risk_flags', 0))} Flag(s)")
+                st.metric("Document Type", str(doc_type))
+                st.metric("Extraction Status", "🟢 Extracted")
 
 
 def render_rule_engine_parameter_editor(extracted_data: dict, applicant_id: str, key_prefix: str) -> dict:
@@ -1261,6 +1268,12 @@ def main():
 
         render_top_navbar(user_email=user_email, user_role=user_role)
 
+        st.markdown("""
+        <style>
+            [data-testid="stSidebar"] { display: block !important; }
+        </style>
+        """, unsafe_allow_html=True)
+
         st.sidebar.markdown("""
         <div style="padding: 0.5rem 0 1rem 0; border-bottom: 1px solid #A5D6A7;">
             <div style="font-size:1.1rem; font-weight:800; color:#FFFFFF;">AltCredit System</div>
@@ -1293,10 +1306,14 @@ def render_single_auth_page():
     if "auth_mode" not in st.session_state:
         st.session_state["auth_mode"] = "signin"
 
-    st.markdown("""
-    <style>
-        [data-testid="stSidebar"] { display: none !important; }
-    </style>
+    st.sidebar.markdown("""
+    <div style="padding: 0.5rem 0 1rem 0; border-bottom: 1px solid #A5D6A7;">
+        <div style="font-size:1.1rem; font-weight:800; color:#FFFFFF;">💳 AltCredit System</div>
+        <div style="font-size:0.8rem; color:#C8E6C9;">Bank-Grade AI Risk Engine</div>
+    </div>
+    <div style="margin-top:1rem; color:#ECFDF5; font-size:0.88rem; line-height:1.4;">
+        Welcome! Please sign in or register an account to access your Credit Scorecard and Financial Offers.
+    </div>
     """, unsafe_allow_html=True)
 
     hero_col, auth_col = st.columns([1.1, 1], gap="large")
@@ -1672,9 +1689,8 @@ def render_borrower_scorecard(applicant_id: str):
             st.success(f"✅ Successfully parsed text & features from uploaded PDF: **{uploaded_file.name}**")
 
         if extracted_data:
-            render_ai_extracted_summary(extracted_data)
-
             editor_res = render_rule_engine_parameter_editor(extracted_data, applicant_id, "onboard")
+            render_ai_extracted_summary(extracted_data)
             if editor_res["submitted"]:
                 applicant_data = editor_res["data"]
                 upsert_applicant_profile(applicant_data)
@@ -2096,9 +2112,8 @@ def render_credit_evaluator():
                 extracted_data = None
 
         if extracted_data:
-            render_ai_extracted_summary(extracted_data)
-
             editor_res = render_rule_engine_parameter_editor(extracted_data, user_app_id, "evaluator")
+            render_ai_extracted_summary(extracted_data)
             if editor_res["submitted"]:
                 applicant_data = editor_res["data"]
                 upsert_applicant_profile(applicant_data)
