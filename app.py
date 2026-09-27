@@ -1808,7 +1808,7 @@ def render_borrower_scorecard(applicant_id: str):
         max_pts = max(float(comp_df["Points"].max() * 1.18) if len(comp_df) > 0 else 400.0, 400.0)
         min_pts = min(0.0, float(comp_df["Points"].min() * 1.2) if len(comp_df) > 0 else 0.0)
 
-        bars = alt.Chart(comp_df).mark_bar(color="#10B981", cornerRadiusEnd=6).encode(
+        bars = alt.Chart(comp_df).mark_bar(color="#10B981").encode(
             x=alt.X(
                 "Component:N",
                 sort=None,
@@ -2367,7 +2367,7 @@ def render_model_analytics():
     max_imp = max(float(imp_df["Importance"].max() * 1.18), 1.0)
 
     st.markdown('<div class="white-card">', unsafe_allow_html=True)
-    bars = alt.Chart(imp_df).mark_bar(color="#00E599", cornerRadiusEnd=6).encode(
+    bars = alt.Chart(imp_df).mark_bar(color="#00E599").encode(
         x=alt.X(
             "Feature:N",
             sort=None,
