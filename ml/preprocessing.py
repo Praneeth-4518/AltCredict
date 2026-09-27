@@ -24,7 +24,7 @@ IDENTIFIER_COLUMNS = [
     "employment_status"  # raw text string mapped to numeric
 ]
 
-
+#Pipeline
 class PipelinePreprocessor:
     """
     Stateful preprocessor class that fits on training data and transforms 
