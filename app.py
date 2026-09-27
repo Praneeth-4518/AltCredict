@@ -1614,23 +1614,21 @@ def render_applicant_dashboard():
     if "selected_offer" in st.session_state and st.session_state["selected_offer"]:
         options.append("🏦 Partner Bank Checkout Division")
 
-    # If a button requested navigation, apply target BEFORE radio widget is instantiated
+    # Sync navigation target if requested by any button
     if "nav_radio_target" in st.session_state:
         target = st.session_state.pop("nav_radio_target")
         if target in options:
             st.session_state["applicant_nav"] = target
-            st.session_state["nav_radio"] = target
 
     if "applicant_nav" not in st.session_state or st.session_state["applicant_nav"] not in options:
         st.session_state["applicant_nav"] = options[0]
 
-    if "nav_radio" not in st.session_state or st.session_state["nav_radio"] not in options:
-        st.session_state["nav_radio"] = st.session_state["applicant_nav"]
+    nav_index = options.index(st.session_state["applicant_nav"]) if st.session_state["applicant_nav"] in options else 0
 
     app_mode = st.sidebar.radio(
         "Applicant Navigation:",
         options,
-        key="nav_radio"
+        index=nav_index
     )
 
     st.session_state["applicant_nav"] = app_mode
@@ -1783,20 +1781,33 @@ def render_borrower_scorecard(applicant_id: str):
         component_label_map = {
             "lifestyle": "Lifestyle",
             "spending": "Spending",
+            "spending_behavior": "Spending Behavior",
             "repayment": "Repayment",
+            "repayment_discipline": "Repayment Discipline",
             "adjustments": "Credit Bonus & Risk Factors"
         }
+        comp_scores = res.get("component_scores", {}) if isinstance(res, dict) else {}
+        if not comp_scores:
+            comp_scores = {
+                "lifestyle": 0,
+                "spending_behavior": 0,
+                "repayment_discipline": 0,
+                "adjustments": 0
+            }
+
         comp_data = []
-        for k, v in res["component_scores"].items():
+        for k, v in comp_scores.items():
             label = component_label_map.get(k.lower(), k.replace("_", " ").title())
+            val_int = int(round(v)) if v is not None else 0
             comp_data.append({
                 "Component": label,
-                "Points": v,
-                "PointsDisplay": f"{v:+d} pts" if k.lower() == "adjustments" else f"{v} pts"
+                "Points": val_int,
+                "PointsDisplay": f"{val_int:+d} pts" if "adjustment" in k.lower() else f"{val_int} pts"
             })
         comp_df = pd.DataFrame(comp_data)
 
-        max_pts = max(float(comp_df["Points"].max() * 1.18), 400.0)
+        max_pts = max(float(comp_df["Points"].max() * 1.18) if len(comp_df) > 0 else 400.0, 400.0)
+        min_pts = min(0.0, float(comp_df["Points"].min() * 1.2) if len(comp_df) > 0 else 0.0)
 
         bars = alt.Chart(comp_df).mark_bar(color="#10B981", cornerRadiusEnd=6).encode(
             x=alt.X(
@@ -1817,7 +1828,7 @@ def render_borrower_scorecard(applicant_id: str):
             ),
             y=alt.Y(
                 "Points:Q",
-                scale=alt.Scale(domain=[0, max_pts]),
+                scale=alt.Scale(domain=[min_pts, max_pts]),
                 axis=alt.Axis(
                     title="Score Contribution (Points 0-1000)",
                     titleColor="#059669",
